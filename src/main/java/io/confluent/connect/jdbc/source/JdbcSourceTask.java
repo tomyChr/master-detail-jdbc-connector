@@ -64,7 +64,7 @@ public class JdbcSourceTask extends SourceTask {
 
   private static final Logger log = LoggerFactory.getLogger(JdbcSourceTask.class);
 
-  private Time time;
+  private final Time time;
   private JdbcSourceTaskConfig config;
   private DatabaseDialect dialect;
   //Visible for Testing
@@ -141,17 +141,17 @@ public class JdbcSourceTask extends SourceTask {
                     )
     );
     TableQuerier.QueryMode queryMode = !query.isEmpty() ? TableQuerier.QueryMode.QUERY :
-            TableQuerier.QueryMode.TABLE;
+                                       TableQuerier.QueryMode.TABLE;
     List<String> tablesOrQuery = queryMode == TableQuerier.QueryMode.QUERY
-            ? Collections.singletonList(query) : tables;
+                                 ? Collections.singletonList(query) : tables;
 
     String mode = config.getString(JdbcSourceTaskConfig.MODE_CONFIG);
     //used only in table mode
     Map<String, List<Map<String, String>>> partitionsByTableFqn = new HashMap<>();
     Map<Map<String, String>, Map<String, Object>> offsets = null;
     if (mode.equals(JdbcSourceTaskConfig.MODE_INCREMENTING)
-            || mode.equals(JdbcSourceTaskConfig.MODE_TIMESTAMP)
-            || mode.equals(JdbcSourceTaskConfig.MODE_TIMESTAMP_INCREMENTING)) {
+        || mode.equals(JdbcSourceTaskConfig.MODE_TIMESTAMP)
+        || mode.equals(JdbcSourceTaskConfig.MODE_TIMESTAMP_INCREMENTING)) {
       List<Map<String, String>> partitions = new ArrayList<>(tables.size());
       switch (queryMode) {
         case TABLE:
@@ -167,7 +167,7 @@ public class JdbcSourceTask extends SourceTask {
         case QUERY:
           log.trace("Starting in QUERY mode");
           partitions.add(Collections.singletonMap(JdbcSourceConnectorConstants.QUERY_NAME_KEY,
-                  JdbcSourceConnectorConstants.QUERY_NAME_VALUE));
+                                                  JdbcSourceConnectorConstants.QUERY_NAME_VALUE));
           break;
         default:
           throw new ConnectException("Unknown query mode: " + queryMode);
@@ -177,11 +177,11 @@ public class JdbcSourceTask extends SourceTask {
     }
 
     String incrementingColumn
-            = config.getString(JdbcSourceTaskConfig.INCREMENTING_COLUMN_NAME_CONFIG);
+        = config.getString(JdbcSourceTaskConfig.INCREMENTING_COLUMN_NAME_CONFIG);
     List<String> timestampColumns
-            = config.getList(JdbcSourceTaskConfig.TIMESTAMP_COLUMN_NAME_CONFIG);
+        = config.getList(JdbcSourceTaskConfig.TIMESTAMP_COLUMN_NAME_CONFIG);
     boolean validateNonNulls
-            = config.getBoolean(JdbcSourceTaskConfig.VALIDATE_NON_NULL_CONFIG);
+        = config.getBoolean(JdbcSourceTaskConfig.VALIDATE_NON_NULL_CONFIG);
 
     for (String tableOrQuery : tablesOrQuery) {
       final List<Map<String, String>> tablePartitionsToCheck;
@@ -190,18 +190,18 @@ public class JdbcSourceTask extends SourceTask {
         case TABLE:
           if (validateNonNulls) {
             validateNonNullable(
-                    mode,
-                    tableOrQuery,
-                    incrementingColumn,
-                    timestampColumns
+                mode,
+                tableOrQuery,
+                incrementingColumn,
+                timestampColumns
             );
           }
           tablePartitionsToCheck = partitionsByTableFqn.get(tableOrQuery);
           break;
         case QUERY:
           partition = Collections.singletonMap(
-                  JdbcSourceConnectorConstants.QUERY_NAME_KEY,
-                  JdbcSourceConnectorConstants.QUERY_NAME_VALUE
+              JdbcSourceConnectorConstants.QUERY_NAME_KEY,
+              JdbcSourceConnectorConstants.QUERY_NAME_VALUE
           );
           tablePartitionsToCheck = Collections.singletonList(partition);
           break;
@@ -222,13 +222,7 @@ public class JdbcSourceTask extends SourceTask {
           }
         }
       }
-
-      addQuerier(queryMode,
-              mode,
-              incrementingColumn,
-              timestampColumns,
-              tableOrQuery,
-              offset);
+      addQuerier(queryMode, mode, incrementingColumn, timestampColumns, tableOrQuery, offset);
     }
 
     running.set(true);
@@ -238,13 +232,24 @@ public class JdbcSourceTask extends SourceTask {
     maxRetriesPerQuerier = config.getInt(JdbcSourceConnectorConfig.QUERY_RETRIES_CONFIG);
   }
 
-  private void addQuerier(TableQuerier.QueryMode queryMode, String mode,
-                          String incrementingColumn, List<String> timestampColumns,
-                          String tableOrQuery, Map<String, Object> offset) {
+  private void addQuerier(TableQuerier.QueryMode queryMode,
+                          String mode,
+                          String incrementingColumn,
+                          List<String> timestampColumns,
+                          String tableOrQuery,
+                          Map<String, Object> offset) {
 
+    Long timestampDelayInterval
+            = config.getLong(JdbcSourceTaskConfig.TIMESTAMP_DELAY_INTERVAL_MS_CONFIG);
     TimeZone timeZone = config.timeZone();
+    String suffix = config.getString(JdbcSourceTaskConfig.QUERY_SUFFIX_CONFIG).trim();
+    offset = computeInitialOffset(tableOrQuery, offset, timeZone);
+    String topicPrefix = config.topicPrefix();
+    JdbcSourceConnectorConfig.TimestampGranularity timestampGranularity
+            = JdbcSourceConnectorConfig.TimestampGranularity.get(config);
 
     TableQuerier querier = null;
+
     if (mode.equals(JdbcSourceTaskConfig.MODE_BULK)) {
       querier =
               new BulkTableQuerier(
@@ -252,53 +257,49 @@ public class JdbcSourceTask extends SourceTask {
                       queryMode,
                       tableOrQuery,
                       config.topicPrefix(),
-                      config.getString(JdbcSourceTaskConfig.QUERY_SUFFIX_CONFIG).trim()
+                      suffix
               );
     } else if (mode.equals(JdbcSourceTaskConfig.MODE_INCREMENTING)) {
-      querier =
-              new TimestampIncrementingTableQuerier(
+      querier = new TimestampIncrementingTableQuerier(
                       dialect,
                       queryMode,
                       tableOrQuery,
-                      config.topicPrefix(),
+                      topicPrefix,
                       null,
                       incrementingColumn,
-                      computeInitialOffset(tableOrQuery, offset, timeZone),
-                      config.getLong(JdbcSourceTaskConfig.TIMESTAMP_DELAY_INTERVAL_MS_CONFIG),
+                      offset,
+                      timestampDelayInterval,
                       timeZone,
-                      config.getString(JdbcSourceTaskConfig.QUERY_SUFFIX_CONFIG).trim(),
-                      JdbcSourceConnectorConfig.TimestampGranularity.get(config)
+                      suffix,
+                      timestampGranularity
               );
     } else if (mode.equals(JdbcSourceTaskConfig.MODE_TIMESTAMP)) {
-      querier =
-              new TimestampTableQuerier(
+      querier = new TimestampTableQuerier(
                       dialect,
                       queryMode,
                       tableOrQuery,
-                      config.topicPrefix(),
+                      topicPrefix,
                       timestampColumns,
-                      computeInitialOffset(tableOrQuery, offset, timeZone),
-                      config.getLong(JdbcSourceTaskConfig.TIMESTAMP_DELAY_INTERVAL_MS_CONFIG),
+                      offset,
+                      timestampDelayInterval,
                       timeZone,
-                      config.getString(JdbcSourceTaskConfig.QUERY_SUFFIX_CONFIG).trim(),
-                      JdbcSourceConnectorConfig.TimestampGranularity.get(config)
+                      suffix,
+                      timestampGranularity
               );
     } else if (mode.endsWith(JdbcSourceTaskConfig.MODE_TIMESTAMP_INCREMENTING)) {
-      tableQueue.add(
-              new TimestampIncrementingTableQuerier(
+      querier = new TimestampIncrementingTableQuerier(
                       dialect,
                       queryMode,
                       tableOrQuery,
-                      config.topicPrefix(),
+                      topicPrefix,
                       timestampColumns,
                       incrementingColumn,
-                      computeInitialOffset(tableOrQuery, offset, timeZone),
-                      config.getLong(JdbcSourceTaskConfig.TIMESTAMP_DELAY_INTERVAL_MS_CONFIG),
+                      offset,
+                      timestampDelayInterval,
                       timeZone,
-                      config.getString(JdbcSourceTaskConfig.QUERY_SUFFIX_CONFIG).trim(),
-                      JdbcSourceConnectorConfig.TimestampGranularity.get(config)
-              )
-      );
+                      suffix,
+                      timestampGranularity
+              );
     }
     if (config.getList(JdbcSourceTaskConfig.MASTERDETAIL_GROUPING_COLUMNS_CONFIG) != null) {
       tableQueue.add(new MasterDetailTableQuerier(querier, config));
@@ -322,8 +323,8 @@ public class JdbcSourceTask extends SourceTask {
   private List<Map<String, String>> possibleTablePartitions(String table) {
     TableId tableId = dialect.parseTableIdentifier(table);
     return Arrays.asList(
-            OffsetProtocols.sourcePartitionForProtocolV1(tableId),
-            OffsetProtocols.sourcePartitionForProtocolV0(tableId)
+        OffsetProtocols.sourcePartitionForProtocolV1(tableId),
+        OffsetProtocols.sourcePartitionForProtocolV0(tableId)
     );
   }
 
@@ -395,17 +396,17 @@ public class JdbcSourceTask extends SourceTask {
 
   @Override
   public List<SourceRecord> poll() throws InterruptedException {
-    log.trace("{} Polling for new data");
+    log.trace("Polling for new data");
 
     Map<TableQuerier, Integer> consecutiveEmptyResults = tableQueue.stream().collect(
-            Collectors.toMap(Function.identity(), (q) -> 0));
+        Collectors.toMap(Function.identity(), (q) -> 0));
     while (running.get()) {
       final TableQuerier querier = tableQueue.peek();
 
       if (!querier.querying()) {
         // If not in the middle of an update, wait for next update time
         final long nextUpdate = querier.getLastUpdate()
-                + config.getInt(JdbcSourceTaskConfig.POLL_INTERVAL_MS_CONFIG);
+            + config.getInt(JdbcSourceTaskConfig.POLL_INTERVAL_MS_CONFIG);
         final long now = time.milliseconds();
         final long sleepMs = Math.min(nextUpdate - now, 100);
 
@@ -439,9 +440,9 @@ public class JdbcSourceTask extends SourceTask {
           log.trace("No updates for {}", querier.toString());
 
           if (Collections.min(consecutiveEmptyResults.values())
-                  >= CONSECUTIVE_EMPTY_RESULTS_BEFORE_RETURN) {
+              >= CONSECUTIVE_EMPTY_RESULTS_BEFORE_RETURN) {
             log.trace("More than " + CONSECUTIVE_EMPTY_RESULTS_BEFORE_RETURN
-                    + " consecutive empty results for all queriers, returning");
+                + " consecutive empty results for all queriers, returning");
             return null;
           } else {
             continue;
@@ -454,7 +455,7 @@ public class JdbcSourceTask extends SourceTask {
         return results;
       } catch (SQLNonTransientException sqle) {
         log.error("Non-transient SQL exception while running query for table: {}",
-                querier, sqle);
+            querier, sqle);
         resetAndRequeueHead(querier, true);
         // This task has failed, so close any resources (may be reopened if needed) before throwing
         closeResources();
@@ -506,14 +507,14 @@ public class JdbcSourceTask extends SourceTask {
   }
 
   private void validateNonNullable(
-          String incrementalMode,
-          String table,
-          String incrementingColumn,
-          List<String> timestampColumns
+      String incrementalMode,
+      String table,
+      String incrementingColumn,
+      List<String> timestampColumns
   ) {
     try {
       Set<String> lowercaseTsColumns = new HashSet<>();
-      for (String timestampColumn : timestampColumns) {
+      for (String timestampColumn: timestampColumns) {
         lowercaseTsColumns.add(timestampColumn.toLowerCase(Locale.getDefault()));
       }
 
@@ -542,23 +543,23 @@ public class JdbcSourceTask extends SourceTask {
       // for table-based copying because custom query mode doesn't allow this to be looked up
       // without a query or parsing the query since we don't have a table name.
       if ((incrementalMode.equals(JdbcSourceConnectorConfig.MODE_INCREMENTING)
-              || incrementalMode.equals(JdbcSourceConnectorConfig.MODE_TIMESTAMP_INCREMENTING))
-              && incrementingOptional) {
+           || incrementalMode.equals(JdbcSourceConnectorConfig.MODE_TIMESTAMP_INCREMENTING))
+          && incrementingOptional) {
         throw new ConnectException("Cannot make incremental queries using incrementing column "
-                + incrementingColumn + " on " + table + " because this column "
-                + "is nullable.");
+                                   + incrementingColumn + " on " + table + " because this column "
+                                   + "is nullable.");
       }
       if ((incrementalMode.equals(JdbcSourceConnectorConfig.MODE_TIMESTAMP)
-              || incrementalMode.equals(JdbcSourceConnectorConfig.MODE_TIMESTAMP_INCREMENTING))
-              && !atLeastOneTimestampNotOptional) {
+           || incrementalMode.equals(JdbcSourceConnectorConfig.MODE_TIMESTAMP_INCREMENTING))
+          && !atLeastOneTimestampNotOptional) {
         throw new ConnectException("Cannot make incremental queries using timestamp columns "
-                + timestampColumns + " on " + table + " because all of these "
-                + "columns "
-                + "nullable.");
+                                   + timestampColumns + " on " + table + " because all of these "
+                                   + "columns "
+                                   + "nullable.");
       }
     } catch (SQLException e) {
       throw new ConnectException("Failed trying to validate that columns used for offsets are NOT"
-              + " NULL", e);
+                                 + " NULL", e);
     }
   }
 }

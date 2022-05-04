@@ -15,7 +15,6 @@
 
 package io.confluent.connect.jdbc.source;
 
-import io.confluent.connect.jdbc.util.BytesUtil;
 import org.apache.commons.io.FileUtils;
 import org.apache.derby.jdbc.EmbeddedDriver;
 import org.slf4j.Logger;
@@ -23,9 +22,15 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.sql.*;
+import java.sql.Blob;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.Arrays;
 import java.util.stream.Collectors;
+
+import io.confluent.connect.jdbc.util.BytesUtil;
 
 /**
  * Embedded Derby server useful for testing against a real JDBC database.
