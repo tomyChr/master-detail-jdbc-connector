@@ -51,7 +51,8 @@ public class MasterDetailTableQuerier extends TableQuerier {
   public MasterDetailTableQuerier(TableQuerier tableQuerier, JdbcSourceTaskConfig config) {
     super(tableQuerier.dialect,
             tableQuerier.mode,
-            tableQuerier.mode == QueryMode.TABLE ? tableQuerier.tableId.tableName() : tableQuerier.query,
+            tableQuerier.mode == QueryMode.TABLE ? tableQuerier.tableId.tableName() :
+                    tableQuerier.query,
             tableQuerier.topicPrefix,
             tableQuerier.suffix);
     this.wrappedTableQuerier = tableQuerier;
@@ -83,7 +84,11 @@ public class MasterDetailTableQuerier extends TableQuerier {
                                               String detailName,
                                               SchemaMapping detailSchemaMapping) throws SQLException {
     String schemaName = tableId != null ? tableId.tableName() : null; // backwards compatible
-    return SchemaMapping.create(schemaName, new ResultSetMetaDataFilter(resultSet.getMetaData(), columns), dialect, detailName, detailSchemaMapping);
+    return SchemaMapping.create(schemaName,
+            new ResultSetMetaDataFilter(resultSet.getMetaData(), columns),
+            dialect,
+            detailName,
+            detailSchemaMapping);
   }
 
   @Override
@@ -133,7 +138,8 @@ public class MasterDetailTableQuerier extends TableQuerier {
 
     // while has next() and grouping cols content didn't change
     boolean hadNext;
-    while ((hadNext = next()) && previousGroupingValues.equals(extractColumns(nextRecord, groupingSchemaMapping))) {
+    while ((hadNext = next()) && previousGroupingValues
+            .equals(extractColumns(nextRecord, groupingSchemaMapping))) {
       log.debug("MasterDetailTableQuerier: next data set: {}", nextRecord.value());
       // add detail to detail-Struct
       detail.add(extractColumns(nextRecord, detailSchemaMapping));
@@ -175,7 +181,9 @@ public class MasterDetailTableQuerier extends TableQuerier {
     // the schema used for record is no the same as the one in extractedRecord and hence
     // for extracting the value we use the field name rather than the field
     // in addition we need to exclude the filed later holding the detail records
-    record.schema().fields().stream().filter(field -> !detailName.equals(field.name())).forEach(field -> record.put(field, values.get(field.name())));
+    record.schema().fields().stream().filter(field ->
+            !detailName.equals(field.name())).forEach(field ->
+            record.put(field, values.get(field.name())));
     return record;
   }
 

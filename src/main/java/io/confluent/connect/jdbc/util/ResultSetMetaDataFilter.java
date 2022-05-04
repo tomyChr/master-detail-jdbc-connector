@@ -29,12 +29,15 @@ public class ResultSetMetaDataFilter implements ResultSetMetaData {
    *                          columns won't be accessible nor visible
    * @throws SQLException if a column specified is not available in the {@code resultSetMetaData}
    */
-  public ResultSetMetaDataFilter(ResultSetMetaData resultSetMetaData, List<String> columns) throws SQLException {
+  public ResultSetMetaDataFilter(ResultSetMetaData resultSetMetaData, List<String> columns)
+          throws SQLException {
     this.internalResultSetMetaData = resultSetMetaData;
     this.columnMapping = setupColumnMapping(resultSetMetaData, columns);
   }
 
-  static Map<Integer,Integer> setupColumnMapping(final ResultSetMetaData resultSetMetaData, final List<String> columns) throws SQLException {
+  static Map<Integer,Integer> setupColumnMapping(final ResultSetMetaData resultSetMetaData,
+                                                 final List<String> columns)
+          throws SQLException {
     final Map<Integer,Integer> colMapping = new HashMap<>();
     if (columns.size() == 0) {
       // if no columns specified, we create a 1:1 mapping;
@@ -49,13 +52,15 @@ public class ResultSetMetaDataFilter implements ResultSetMetaData {
     return colMapping;
   }
 
-  static Integer findColumn(final ResultSetMetaData resultSetMetaData, final String columnName) throws SQLException {
+  static Integer findColumn(final ResultSetMetaData resultSetMetaData, final String columnName)
+          throws SQLException {
     for (int i = 1; i <= resultSetMetaData.getColumnCount(); i++) {
       if (resultSetMetaData.getColumnName(i).equals(columnName)) {
         return i;
       }
     }
-    throw new SQLException("Column name '" + columnName + "' does not exist in " + resultSetMetaData);
+    throw new SQLException("Column name '" + columnName + "' does not exist in "
+            + resultSetMetaData);
   }
 
   @Override
@@ -165,7 +170,7 @@ public class ResultSetMetaDataFilter implements ResultSetMetaData {
 
   @Override
   public <T> T unwrap(Class<T> iface) {
-    return (T)internalResultSetMetaData;
+    return null;
   }
 
   @Override

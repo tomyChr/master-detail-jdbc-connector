@@ -69,7 +69,8 @@ public class SchemaMapping {
     }
     if (detailName != null) {
       // add an ARRAY for the detail records
-      builder = builder.field(detailName, SchemaBuilder.array(detailSchemaMapping.schema())).optional();
+      builder = builder.field(detailName, SchemaBuilder.array(detailSchemaMapping.schema()))
+              .optional();
     }
     Schema schema = builder.build();
     return new SchemaMapping(schema, colConvertersByFieldName);
@@ -100,9 +101,9 @@ public class SchemaMapping {
   }
 
   /**
-   * Get the {@link SchemaMapping.FieldSetter} functions, which contain one for each result set column whose
-   * values are to be mapped/converted and then set on the corresponding {@link Field} in supplied
-   * {@link Struct} objects.
+   * Get the {@link SchemaMapping.FieldSetter} functions, which contain one for each result set
+   * column whose values are to be mapped/converted and then set on the corresponding
+   * {@link Field} in supplied {@link Struct} objects.
    *
    * @return the array of {@link SchemaMapping.FieldSetter} instances; never null and never empty
    */
@@ -138,8 +139,8 @@ public class SchemaMapping {
     }
 
     /**
-     * Call the {@link DatabaseDialect.ColumnConverter converter} on the supplied {@link ResultSet} and set the
-     * corresponding {@link #field() field} on the supplied {@link Struct}.
+     * Call the {@link DatabaseDialect.ColumnConverter converter} on the supplied {@link ResultSet}
+     * and set the corresponding {@link #field() field} on the supplied {@link Struct}.
      *
      * @param struct    the struct whose field is to be set with the converted value from the result
      *                  set; may not be null
