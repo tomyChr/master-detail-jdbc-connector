@@ -25,16 +25,16 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
-       <derby.version>10.14.2.0</derby.version>
+        <derby.version>10.14.2.0</derby.version>
         <commons-io.version>2.4</commons-io.version>
-       <kafka.connect.maven.plugin.version>0.11.1</kafka.connect.maven.plugin.version>
-       <mssqlserver.jdbc.driver.version>8.4.1.jre8</mssqlserver.jdbc.driver.version>
+        <kafka.connect.maven.plugin.version>0.11.1</kafka.connect.maven.plugin.version>
+        <mssqlserver.jdbc.driver.version>8.4.1.jre8</mssqlserver.jdbc.driver.version>
    </properties>
 
     <repositories>
         <repository>
             <id>confluent</id>
-            <url>http://packages.confluent.io/maven/</url>
+            <url>https://packages.confluent.io/maven/</url>
         </repository>
     </repositories>
 

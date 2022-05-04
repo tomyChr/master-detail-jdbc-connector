@@ -6,7 +6,7 @@ package io.confluent.connect.jdbc.source;
 
 
 import io.confluent.connect.jdbc.dialect.DatabaseDialect;
-import io.confluent.connect.jdbc.source.util.ResultSetMetaDataFilter;
+import io.confluent.connect.jdbc.util.ResultSetMetaDataFilter;
 import org.apache.kafka.connect.data.Struct;
 import org.apache.kafka.connect.errors.ConnectException;
 import org.apache.kafka.connect.source.SourceRecord;

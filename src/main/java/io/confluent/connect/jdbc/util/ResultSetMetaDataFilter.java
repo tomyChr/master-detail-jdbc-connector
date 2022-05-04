@@ -1,4 +1,4 @@
-package io.confluent.connect.jdbc.source.util;
+package io.confluent.connect.jdbc.util;
 
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;

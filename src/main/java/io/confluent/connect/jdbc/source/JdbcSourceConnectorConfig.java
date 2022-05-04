@@ -833,23 +833,16 @@ public class JdbcSourceConnectorConfig extends AbstractConfig {
 
   private static final void addMasterDetailOptions(ConfigDef config) {
     int orderInGroup = 0;
-    config
-//     .define(
-//            MASTERDETAIL_CONFIG,
-//            Type.STRING,
-//            Importance.LOW,
-//            MASTERDETAIL_DOC
-//    )
-    .define(
-            MASTERDETAIL_MASTER_COLUMNS_CONFIG,
-            Type.LIST,
-            MASTERDETAIL_MASTER_COLUMNS_DEFAULT,
-            Importance.MEDIUM,
-            MASTERDETAIL_MASTER_COLUMNS_DOC,
-            MASTERDETAIL_GROUP,
-            ++orderInGroup,
-            Width.MEDIUM,
-            MASTERDETAIL_MASTER_COLUMNS_DISPLAY
+    config.define(
+        MASTERDETAIL_MASTER_COLUMNS_CONFIG,
+        Type.LIST,
+        MASTERDETAIL_MASTER_COLUMNS_DEFAULT,
+        Importance.MEDIUM,
+        MASTERDETAIL_MASTER_COLUMNS_DOC,
+        MASTERDETAIL_GROUP,
+        ++orderInGroup,
+        Width.MEDIUM,
+        MASTERDETAIL_MASTER_COLUMNS_DISPLAY
     ).define(
             MASTERDETAIL_DETAIL_NAME_CONFIG,
             Type.STRING,
