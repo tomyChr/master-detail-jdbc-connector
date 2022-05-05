@@ -470,7 +470,7 @@ public class JdbcSourceConnectorConfig extends AbstractConfig {
     int orderInGroup = 0;
     config.define(
         CONNECTION_URL_CONFIG,
-        ConfigDef.Type.STRING,
+        Type.STRING,
         Importance.HIGH,
         CONNECTION_URL_DOC,
         DATABASE_GROUP,

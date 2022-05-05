@@ -192,5 +192,4 @@ public final class SchemaMapping {
       return field.name();
     }
   }
-
 }
