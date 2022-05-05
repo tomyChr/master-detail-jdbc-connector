@@ -82,7 +82,8 @@ public class MasterDetailTableQuerier extends TableQuerier {
                                               final List<String> columns,
                                               final DatabaseDialect dialect,
                                               String detailName,
-                                              SchemaMapping detailSchemaMapping) throws SQLException {
+                                              SchemaMapping detailSchemaMapping)
+          throws SQLException {
     String schemaName = tableId != null ? tableId.tableName() : null; // backwards compatible
     return SchemaMapping.create(schemaName,
             new ResultSetMetaDataFilter(resultSet.getMetaData(), columns),
@@ -228,7 +229,7 @@ public class MasterDetailTableQuerier extends TableQuerier {
         return false;
       case NEXT:
         log.debug("MasterDetailTableQuerier: skip next - NEXT");
-        if(wrappedTableQuerier.next()) {
+        if (wrappedTableQuerier.next()) {
           nextRecord = wrappedTableQuerier.extractRecord();
           log.debug("MasterDetailTableQuerier: skip next - NEXT record {}", nextRecord.value());
           return true;
@@ -251,7 +252,9 @@ public class MasterDetailTableQuerier extends TableQuerier {
   }
 
   @Override
-  public void resetRetryCount() { wrappedTableQuerier.resetRetryCount(); }
+  public void resetRetryCount() {
+    wrappedTableQuerier.resetRetryCount();
+  }
 
   @Override
   public String toString() {
@@ -259,8 +262,8 @@ public class MasterDetailTableQuerier extends TableQuerier {
             + "table=" + tableId
             + ", query='" + query + '\''
             + ", topicPrefix='" + topicPrefix + '\''
-            + ", groupingColumns='" + (groupingColumns != null ?
-                                       groupingColumns : "") + '\''
+            + ", groupingColumns='" + (groupingColumns != null
+            ? groupingColumns : "") + '\''
             + ", wrappedQuerier=" + wrappedTableQuerier
             + '}';
   }

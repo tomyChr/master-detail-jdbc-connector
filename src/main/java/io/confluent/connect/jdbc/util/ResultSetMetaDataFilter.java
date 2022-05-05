@@ -1,3 +1,18 @@
+/*
+ * Copyright 2018 Confluent Inc.
+ *
+ * Licensed under the Confluent Community License (the "License"); you may not use
+ * this file except in compliance with the License.  You may obtain a copy of the
+ * License at
+ *
+ * http://www.confluent.io/confluent-community-license
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OF ANY KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations under the License.
+ */
+
 package io.confluent.connect.jdbc.util;
 
 import java.sql.ResultSetMetaData;
@@ -10,8 +25,8 @@ import java.util.Map;
  * This filter is wrapping an {@code ResultSetMetaData} object. Only columns specified will be
  * visible and accessible through this filter. The filter behaves like the filtered columns
  * would not exist.
- * <p>
- * Main usage is to create several "lenses" for the {@code MasterDetailTableQuerier} where
+ *
+ * <p>Main usage is to create several "lenses" for the {@code MasterDetailTableQuerier} where
  * columns can be specified to appear on the master record and columns to appear on the detail
  * columns. The filter is necessary for setting up a Schema where {@code SchemaMapping} is
  * including all columns it can find in the {@code ResultSetMetaData} object.
@@ -42,12 +57,12 @@ public class ResultSetMetaDataFilter implements ResultSetMetaData {
     if (columns.size() == 0) {
       // if no columns specified, we create a 1:1 mapping;
       for (int i = 0; i < resultSetMetaData.getColumnCount(); i++) {
-        colMapping.put(i+1, i+1);
+        colMapping.put(i + 1, i + 1);
       }
       return colMapping;
     }
     for (int i = 0; i < columns.size() ; i++) {
-      colMapping.put(i+1, findColumn(resultSetMetaData, columns.get(i)));
+      colMapping.put(i + 1, findColumn(resultSetMetaData, columns.get(i)));
     }
     return colMapping;
   }
