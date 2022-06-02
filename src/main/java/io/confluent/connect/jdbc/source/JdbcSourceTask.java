@@ -256,7 +256,7 @@ public class JdbcSourceTask extends SourceTask {
                       dialect,
                       queryMode,
                       tableOrQuery,
-                      config.topicPrefix(),
+                      topicPrefix,
                       suffix
               );
     } else if (mode.equals(JdbcSourceTaskConfig.MODE_INCREMENTING)) {

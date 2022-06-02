@@ -31,7 +31,8 @@ public class JdbcMasterDetailSourceTaskTest extends JdbcSourceTaskTestBase {
         db.createTable(SINGLE_TABLE_NAME, "id", "INT", "name", "VARCHAR(10)", "value", "INT");
 
         long startTime = time.milliseconds();
-        task.start(masterDetailTableConfig(false, JdbcSourceConnectorConfig.MODE_BULK, null, null));
+        Map<String, String> props = masterDetailTableConfig(false, JdbcSourceConnectorConfig.MODE_BULK, null, null);
+        task.start(props);
 
         db.insert(SINGLE_TABLE_NAME, "id", 1, "name", "group1", "value", 1);
         db.insert(SINGLE_TABLE_NAME, "id", 1, "name", "group1", "value", 2);
@@ -48,9 +49,10 @@ public class JdbcMasterDetailSourceTaskTest extends JdbcSourceTaskTestBase {
         assertEquals(SINGLE_TABLE_PARTITION, records.get(0).sourcePartition());
 
         validateResultTable(records, 3, SINGLE_TABLE_NAME);
-        validateResultRecord(records, 0, 1, 3, "group1", +1);
-        validateResultRecord(records, 1, 2, 2, "group2", +1);
-        validateResultRecord(records, 2, 3, 1, "group3", +1);
+        String expectedSchemaName = props.get(JdbcSourceConnectorConfig.MASTERDETAIL_DETAIL_SCHEMA_NAME_CONFIG);
+        validateResultRecord(records, 0, 1, 3, "group1", +1, expectedSchemaName);
+        validateResultRecord(records, 1, 2, 2, "group2", +1, expectedSchemaName);
+        validateResultRecord(records, 2, 3, 1, "group3", +1, expectedSchemaName);
     }
 
     @Test
@@ -69,7 +71,8 @@ public class JdbcMasterDetailSourceTaskTest extends JdbcSourceTaskTestBase {
         task.initialize(taskContext);
 
         long startTime = time.milliseconds();
-        task.start(masterDetailTableConfig(false, JdbcSourceConnectorConfig.MODE_TIMESTAMP, TIME_STAMP_COLUMN, null));
+        Map<String, String> props = masterDetailTableConfig(false, JdbcSourceConnectorConfig.MODE_TIMESTAMP, TIME_STAMP_COLUMN, null);
+        task.start(props);
 
         String tst = new Timestamp(System.currentTimeMillis()).toString();
         db.insert(SINGLE_TABLE_NAME, "id", 1, "name", "group1", "value", 1, TIME_STAMP_COLUMN, tst);
@@ -93,9 +96,10 @@ public class JdbcMasterDetailSourceTaskTest extends JdbcSourceTaskTestBase {
         assertEquals(partitionForV1, records.get(0).sourcePartition());
 
         validateResultTable(records, 3, SINGLE_TABLE_NAME);
-        validateResultRecord(records, 0, 3, 1,"group3", -1);
-        validateResultRecord(records, 1, 2, 2,"group2", -1);
-        validateResultRecord(records, 2, 1, 3,"group1", -1);
+        String expectedSchemaName = props.get(JdbcSourceConnectorConfig.MASTERDETAIL_DETAIL_SCHEMA_NAME_CONFIG);
+        validateResultRecord(records, 0, 3, 1,"group3", -1, expectedSchemaName);
+        validateResultRecord(records, 1, 2, 2,"group2", -1, expectedSchemaName);
+        validateResultRecord(records, 2, 1, 3,"group1", -1, expectedSchemaName);
     }
 
     @Test
@@ -114,7 +118,8 @@ public class JdbcMasterDetailSourceTaskTest extends JdbcSourceTaskTestBase {
         task.initialize(taskContext);
 
         long startTime = time.milliseconds();
-        task.start(masterDetailTableConfig(false, JdbcSourceConnectorConfig.MODE_INCREMENTING, null, INCREMENT_COLUMN));
+        Map<String, String> props = masterDetailTableConfig(false, JdbcSourceConnectorConfig.MODE_INCREMENTING, null, INCREMENT_COLUMN);
+        task.start(props);
 
         int inc = 101;
         db.insert(SINGLE_TABLE_NAME, "id", 1, "name", "group1", "value", 1, INCREMENT_COLUMN, inc++);
@@ -138,9 +143,10 @@ public class JdbcMasterDetailSourceTaskTest extends JdbcSourceTaskTestBase {
         assertEquals(partitionForV1, records.get(0).sourcePartition());
 
         validateResultTable(records, 3, SINGLE_TABLE_NAME);
-        validateResultRecord(records, 0, 1, 3, "group1", +1);
-        validateResultRecord(records, 1, 2, 2, "group2", +1);
-        validateResultRecord(records, 2, 3, 1, "group3", +1);
+        String expectedSchemaName = props.get(JdbcSourceConnectorConfig.MASTERDETAIL_DETAIL_SCHEMA_NAME_CONFIG);
+        validateResultRecord(records, 0, 1, 3, "group1", +1, expectedSchemaName);
+        validateResultRecord(records, 1, 2, 2, "group2", +1, expectedSchemaName);
+        validateResultRecord(records, 2, 3, 1, "group3", +1, expectedSchemaName);
     }
 
     private static void validateResultTable(List<SourceRecord> records, int expected, String table) {
@@ -151,7 +157,13 @@ public class JdbcMasterDetailSourceTaskTest extends JdbcSourceTaskTestBase {
         }
     }
 
-    private static void validateResultRecord(List<SourceRecord> records, int index, int expectedId, int expectedDetails, String expectedName, int valueAdd) {
+    private static void validateResultRecord(List<SourceRecord> records,
+                                             int index,
+                                             int expectedId,
+                                             int expectedDetails,
+                                             String expectedName,
+                                             int valueAdd,
+                                             String expectedSchemaName) {
         assertTrue("Should contain expected result", index < records.size());
         SourceRecord record = records.get(index);
         assertNotNull("Record " + index + " must not be null", record);
@@ -166,6 +178,7 @@ public class JdbcMasterDetailSourceTaskTest extends JdbcSourceTaskTestBase {
             assertEquals("Detail field 'id' should contain " + expectedId, expectedId, detail.get("id"));
             assertEquals("Detail field 'name' should contain " + expectedName, expectedName, detail.get("name"));
             assertEquals("Detail field 'value' should contain " + value , value, detail.get("value"));
+            assertEquals("Detail field 'schema name' should contain " + expectedSchemaName , expectedSchemaName, detail.schema().name());
         }
     }
 
@@ -189,6 +202,7 @@ public class JdbcMasterDetailSourceTaskTest extends JdbcSourceTaskTestBase {
         props.put(JdbcSourceConnectorConfig.MASTERDETAIL_MASTER_COLUMNS_CONFIG, "id, name");
         props.put(JdbcSourceConnectorConfig.MASTERDETAIL_DETAIL_COLUMNS_CONFIG, "id, name, value");
         props.put(JdbcSourceConnectorConfig.MASTERDETAIL_DETAIL_NAME_CONFIG, "values");
+        props.put(JdbcSourceConnectorConfig.MASTERDETAIL_DETAIL_SCHEMA_NAME_CONFIG, "io.confluent.Values");
         return props;
     }
 

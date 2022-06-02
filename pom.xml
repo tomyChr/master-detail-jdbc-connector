@@ -15,7 +15,7 @@
     <version>10.5.0-SNAPSHOT</version>
     <name>kafka-connect-jdbc</name>
     <description>A Kafka Connect JDBC connector for copying data between databases and Kafka.</description>
-    <url>http://confluent.io</url>
+    <url>https://confluent.io</url>
 
    <properties>
         <maven.compiler.source>11</maven.compiler.source>

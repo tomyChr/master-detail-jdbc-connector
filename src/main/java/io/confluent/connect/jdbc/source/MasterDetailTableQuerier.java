@@ -38,6 +38,7 @@ public class MasterDetailTableQuerier extends TableQuerier {
   protected TableQuerier wrappedTableQuerier;
   final List<String> masterColumns;
   final String detailName;
+  final String detailSchemaName;
   final List<String> detailColumns;
   final List<String> groupingColumns;
 
@@ -59,6 +60,7 @@ public class MasterDetailTableQuerier extends TableQuerier {
 
     masterColumns = config.getList(JdbcSourceTaskConfig.MASTERDETAIL_MASTER_COLUMNS_CONFIG);
     detailName = config.getString(JdbcSourceTaskConfig.MASTERDETAIL_DETAIL_NAME_CONFIG);
+    detailSchemaName = config.getString(JdbcSourceTaskConfig.MASTERDETAIL_DETAIL_SCHEMA_NAME_CONFIG);
     detailColumns = config.getList(JdbcSourceTaskConfig.MASTERDETAIL_DETAIL_COLUMNS_CONFIG);
     groupingColumns = config.getList(JdbcSourceTaskConfig.MASTERDETAIL_GROUPING_COLUMNS_CONFIG);
   }
@@ -68,23 +70,26 @@ public class MasterDetailTableQuerier extends TableQuerier {
     log.debug("MasterDetailTableQuerier: mayStartQuery - setup schema mappings, etc.");
     wrappedTableQuerier.maybeStartQuery(db);
     // be aware that the detail schema is required for building the master schema
-    detailSchemaMapping = createSchemaMapping(wrappedTableQuerier.resultSet, detailColumns,
+    detailSchemaMapping = createSchemaMapping(wrappedTableQuerier.resultSet, detailSchemaName, detailColumns,
             dialect, null, null);
     if (masterColumns.size() > 0) {
-      masterSchemaMapping = createSchemaMapping(wrappedTableQuerier.resultSet, masterColumns,
+      masterSchemaMapping = createSchemaMapping(wrappedTableQuerier.resultSet, null, masterColumns,
               dialect, detailName, detailSchemaMapping);
     }
-    groupingSchemaMapping = createSchemaMapping(wrappedTableQuerier.resultSet, groupingColumns,
+    groupingSchemaMapping = createSchemaMapping(wrappedTableQuerier.resultSet, null, groupingColumns,
             dialect, null, null);
   }
 
   protected SchemaMapping createSchemaMapping(ResultSet resultSet,
+                                              String schemaName,
                                               final List<String> columns,
                                               final DatabaseDialect dialect,
                                               String detailName,
                                               SchemaMapping detailSchemaMapping)
           throws SQLException {
-    String schemaName = tableId != null ? tableId.tableName() : null; // backwards compatible
+    if (schemaName == null || schemaName.isEmpty()) {
+      schemaName = tableId != null ? tableId.tableName() : null; // backwards compatible
+    }
     return SchemaMapping.create(schemaName,
             new ResultSetMetaDataFilter(resultSet.getMetaData(), columns),
             dialect,

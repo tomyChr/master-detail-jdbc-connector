@@ -395,6 +395,12 @@ public class JdbcSourceConnectorConfig extends AbstractConfig {
                   + "(for example, ``masterdetail.detail.name: \"Products\"``).";
   public static final String MASTERDETAIL_DETAIL_NAME_DEFAULT = "Detail";
   private static final String MASTERDETAIL_DETAIL_NAME_DISPLAY = "Master/Detail Detail Name";
+  public static final String MASTERDETAIL_DETAIL_SCHEMA_NAME_CONFIG = "masterdetail.detail.schema.name";
+  private static final String MASTERDETAIL_DETAIL_SCHEMA_NAME_DOC =
+          "Sets the schema name for the detail records schema. "
+                  + "(for example, ``masterdetail.detail.schema.name: \"io.confluent.Product\"``).";
+  public static final String MASTERDETAIL_DETAIL_SCHEMA_NAME_DEFAULT = "";
+  private static final String MASTERDETAIL_DETAIL_SCHEMA_NAME_DISPLAY = "Master/Detail Detail Schema Name";
 
   public static final String MASTERDETAIL_GROUPING_COLUMNS_CONFIG = "masterdetail.grouping.columns";
   private static final String MASTERDETAIL_GROUPING_COLUMNS_DOC =
@@ -853,6 +859,16 @@ public class JdbcSourceConnectorConfig extends AbstractConfig {
             ++orderInGroup,
             Width.MEDIUM,
             MASTERDETAIL_DETAIL_NAME_DISPLAY
+    ).define(
+            MASTERDETAIL_DETAIL_SCHEMA_NAME_CONFIG,
+            Type.STRING,
+            MASTERDETAIL_DETAIL_SCHEMA_NAME_DEFAULT,
+            Importance.LOW,
+            MASTERDETAIL_DETAIL_SCHEMA_NAME_DOC,
+            MASTERDETAIL_GROUP,
+            ++orderInGroup,
+            Width.MEDIUM,
+            MASTERDETAIL_DETAIL_SCHEMA_NAME_DISPLAY
     ).define(
             MASTERDETAIL_GROUPING_COLUMNS_CONFIG,
             Type.LIST,
